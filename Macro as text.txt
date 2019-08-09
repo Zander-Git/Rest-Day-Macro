@@ -1,7 +1,7 @@
 '==========================================
 ' Title:  Rest day calculation macro
 ' Author: Zander O'Callaghan
-' Date:   13 June 2019
+' Date:   9th Augest 2019
 '==========================================
 Public Catch As Long
 Public startCol, iRowNum, iColNum As Integer
@@ -10,6 +10,9 @@ Sub RestDayRule()
 'Next goal could be to have cells for user to define the starting cell and
 '   for what defines a Rest/annual leave day
 '
+' Key counting thing
+'=SUMPRODUCT(ISNUMBER(FIND("_",F5:F500))*(SUBTOTAL(103,OFFSET(F5,ROW(F5:F500)-MIN(ROW(F5:F500)),0))))
+
 
 'Declare dimmensions
 Dim ws As Worksheet
@@ -19,7 +22,7 @@ Dim leaveCheck, EndLoop As Boolean
 Catch = 0
 
 'These variables are for the start point of the macro
-'Should be the top left of the numbers
+'Should be the top left of the grid
 startCol = 5
 iRowNum = 5
 iColNum = startCol
@@ -32,6 +35,7 @@ Indicator = "_"
 
 With Sheets("Sheet1")
 Do While EndLoop = False
+Application.ScreenUpdating = False
 
 
 'Starts the cellValue from the variables aboves
@@ -42,46 +46,44 @@ cellValueBac = Cells(iRowNum, iColNum - 1)
 If Contains_Keyword(cellValue, AnnualLeave) Then
     'if annual leave
     If Contains_Keyword(cellValueFor, RestDays) Then
-            Cells(iRowNum, iColNum + 1) = cellValueFor & Indicator       'New sub/function for adding "_" to end
-            Call StartLine
-        ElseIf Contains_Keyword(cellValueBac, RestDays) Then
-            Cells(iRowNum, iColNum - 1) = cellValueBac & Indicator         'New sub/function for adding "_" to end
-            Call StartLine
-        Else
-            Call NextCell
+        Cells(iRowNum, iColNum + 1) = cellValueFor & Indicator
+        Call StartLine
+    ElseIf Contains_Keyword(cellValueBac, RestDays) Then
+        Cells(iRowNum, iColNum - 1) = cellValueBac & Indicator
+        Call StartLine
+    Else
+        Call NextCell
     End If
-
-        
 ElseIf Contains_Keyword(cellValue, RestDays) Then
     'if rest day
     If Contains_Keyword(cellValueFor, AnnualLeave) Then
-          Cells(iRowNum, iColNum) = cellValue & Indicator         'New sub/function for adding "_" to end
-          Call StartLine
-        ElseIf Contains_Keyword(cellValueBac, AnnualLeave) Then
-            Cells(iRowNum, iColNum) = cellValue & Indicator          'New sub/function for adding "_" to end
-            Call StartLine
-        Else
+        Cells(iRowNum, iColNum) = cellValue & Indicator
+        Call StartLine
+    ElseIf Contains_Keyword(cellValueBac, AnnualLeave) Then
+        Cells(iRowNum, iColNum) = cellValue & Indicator
+        Call StartLine
+    Else
         Call NextCell
     End If
-
 ElseIf (cellValue = "") Then
     Call NextLine
-
+Else
+    Call NextCell
 End If
 
 Catch = Catch + 1
     
-If (Catch = 100) Then
+If (Catch = 5000) Then
     MsgBox "The catch was triggered"
+    Application.ScreenUpdating = True
     EndLoop = True
 ElseIf (cellValue = "") Then
     cellValue = .Cells(iRowNum, iColNum)
     If (cellValue = "") Then
-        'MsgBox "Done :)"
+        Application.ScreenUpdating = True
         'MsgBox Catch
         MsgBox "done :)"
         EndLoop = True
-        'screenupdate off
     End If
 End If
 Loop
@@ -103,7 +105,6 @@ End Sub
 Sub Error()
 MsgBox "Error"
 End Sub
-
 Function Contains_Keyword(Descr As String, KeyWordS As String) As Boolean
 Dim A() As String, IsIn As Boolean, i As Integer
 A = Split(KeyWordS, "/")
@@ -116,6 +117,5 @@ For i = LBound(A) To UBound(A)
     End If
 Next i
 Contains_Keyword = IsIn
-
 
 End Function
