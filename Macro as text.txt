@@ -14,7 +14,7 @@ Sub RestDayRule()
 'Declare dimmensions
 Dim ws As Worksheet
 Set ws = Sheets("sheet1")
-Dim cellValue, cellPos, varAnnual, varRestAn, varRest, arrRest(4) As String
+Dim cellValue As String, cellValueFor As String, cellValueBac As String, varAnnual, varRestAn, varRest, arrRest(4) As String
 Dim leaveCheck, EndLoop As Boolean
 Catch = 0
 
@@ -24,69 +24,59 @@ startCol = 5
 iRowNum = 5
 iColNum = startCol
 
-'Variables for what to look for in the data
-'varAnnual is for whatever is annual leave
-'varRestAn is for rest days next to annual leave
-'varRest is for rest days
-varAnnual = "AL"
-varRestAn = "r_"
-varRest = "r"               'Rest Day, RRD, TOIL, RCD
-arrRest(0) = "Rest Day"
-arrRest(1) = "RRD"
-arrRest(2) = "TOIL"
-arrRest(3) = "RCD"
-arrRest(4) = "Free Day"
-
+Dim AnnualLeave As String, RestDays As String, Indicator As String
+AnnualLeave = "AL/Rest Day_/Free Day_/TOIL_/RCD_/RRD_"
+RestDays = "Rest Day/Free Day/TOIL/RCD/RRD"
+Indicator = "_"
 
 
 With Sheets("Sheet1")
 Do While EndLoop = False
 
+
 'Starts the cellValue from the variables aboves
 cellValue = .Cells(iRowNum, iColNum)
+cellValueFor = Cells(iRowNum, iColNum + 1)
+cellValueBac = Cells(iRowNum, iColNum - 1)
 
-Select Case cellValue
-
-    Case varAnnual, varRestAn
-        If Cells(iRowNum, iColNum + 1) = varRest Then
-            Cells(iRowNum, iColNum + 1) = varRestAn
+If Contains_Keyword(cellValue, AnnualLeave) Then
+    'if annual leave
+    If Contains_Keyword(cellValueFor, RestDays) Then
+            Cells(iRowNum, iColNum + 1) = cellValueFor & Indicator       'New sub/function for adding "_" to end
             Call StartLine
-        ElseIf Cells(iRowNum, iColNum - 1) = varRest Then
-            Cells(iRowNum, iColNum - 1) = varRestAn
+        ElseIf Contains_Keyword(cellValueBac, RestDays) Then
+            Cells(iRowNum, iColNum - 1) = cellValueBac & Indicator         'New sub/function for adding "_" to end
             Call StartLine
         Else
             Call NextCell
-        End If
+    End If
+
         
-    Case varRest
-    'When a rest day is found, either side of the cell is checked for either positive variables
-        If Cells(iRowNum, iColNum + 1) = varAnnual Then
-          Cells(iRowNum, iColNum) = varRestAn
+ElseIf Contains_Keyword(cellValue, RestDays) Then
+    'if rest day
+    If Contains_Keyword(cellValueFor, AnnualLeave) Then
+          Cells(iRowNum, iColNum) = cellValue & Indicator         'New sub/function for adding "_" to end
           Call StartLine
-        ElseIf Cells(iRowNum, iColNum - 1) = InStr(1, cellValue, varAnnual) Or InStr(1, cellValue, varRestAn) Then
-            Cells(iRowNum, iColNum) = varRestAn
+        ElseIf Contains_Keyword(cellValueBac, AnnualLeave) Then
+            Cells(iRowNum, iColNum) = cellValue & Indicator          'New sub/function for adding "_" to end
             Call StartLine
         Else
         Call NextCell
-        End If
-        
-    Case vbNullString
-        'MsgBox "empty boi"
-        Call NextLine
-    Case Else
-        Call NextCell
-    'Else
-        'Call Error
-    End Select
-        
+    End If
+
+ElseIf (cellValue = "") Then
+    Call NextLine
+
+End If
+
 Catch = Catch + 1
     
-If (Catch = 500000) Then
+If (Catch = 100) Then
     MsgBox "The catch was triggered"
     EndLoop = True
-ElseIf IsEmpty(cellValue) = True Then
+ElseIf (cellValue = "") Then
     cellValue = .Cells(iRowNum, iColNum)
-    If IsEmpty(cellValue) = True Then
+    If (cellValue = "") Then
         'MsgBox "Done :)"
         'MsgBox Catch
         MsgBox "done :)"
@@ -114,27 +104,12 @@ Sub Error()
 MsgBox "Error"
 End Sub
 
-Sub Test_ArrayWay()
-
-Dim AnnualLeave As String, RestDays As String, cellValueTest As String
-AnnualLeave = "AL"
-RestDays = "Rest Day/Free Day/TOIL/RCD/RRD"
-cellValueTest = Cells(3, 3)
-
-If Contains_Keyword(cellValueTest, RestDays) Then
-    Cells(4, 4) = "Rest days"
-Else
-    Cells(4, 4) = "not"
-End If
-
-End Sub
-
 Function Contains_Keyword(Descr As String, KeyWordS As String) As Boolean
 Dim A() As String, IsIn As Boolean, i As Integer
 A = Split(KeyWordS, "/")
 IsIn = False
 For i = LBound(A) To UBound(A)
-    If InStr(1, Descr, A(i)) Then
+    If (Descr = A(i)) Then
         IsIn = True
         Exit For
     Else
