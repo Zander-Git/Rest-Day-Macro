@@ -14,7 +14,7 @@ Sub RestDayRule()
 'Declare dimmensions
 Dim ws As Worksheet
 Set ws = Sheets("sheet1")
-Dim cellValue, cellPos, varAnnual, varRestAn, varRest As String
+Dim cellValue, cellPos, varAnnual, varRestAn, varRest, arrRest(4) As String
 Dim leaveCheck, EndLoop As Boolean
 Catch = 0
 
@@ -28,9 +28,16 @@ iColNum = startCol
 'varAnnual is for whatever is annual leave
 'varRestAn is for rest days next to annual leave
 'varRest is for rest days
-varAnnual = "a"
+varAnnual = "AL"
 varRestAn = "r_"
-varRest = "r"
+varRest = "r"               'Rest Day, RRD, TOIL, RCD
+arrRest(0) = "Rest Day"
+arrRest(1) = "RRD"
+arrRest(2) = "TOIL"
+arrRest(3) = "RCD"
+arrRest(4) = "Free Day"
+
+
 
 With Sheets("Sheet1")
 Do While EndLoop = False
@@ -41,7 +48,6 @@ cellValue = .Cells(iRowNum, iColNum)
 Select Case cellValue
 
     Case varAnnual, varRestAn
-    'When either positive var is found, either side of the cell is checked
         If Cells(iRowNum, iColNum + 1) = varRest Then
             Cells(iRowNum, iColNum + 1) = varRestAn
             Call StartLine
@@ -85,6 +91,7 @@ ElseIf IsEmpty(cellValue) = True Then
         'MsgBox Catch
         MsgBox "done :)"
         EndLoop = True
+        'screenupdate off
     End If
 End If
 Loop
@@ -106,3 +113,34 @@ End Sub
 Sub Error()
 MsgBox "Error"
 End Sub
+
+Sub Test_ArrayWay()
+
+Dim AnnualLeave As String, RestDays As String, cellValueTest As String
+AnnualLeave = "AL"
+RestDays = "Rest Day/Free Day/TOIL/RCD/RRD"
+cellValueTest = Cells(3, 3)
+
+If Contains_Keyword(cellValueTest, RestDays) Then
+    Cells(4, 4) = "Rest days"
+Else
+    Cells(4, 4) = "not"
+End If
+
+End Sub
+
+Function Contains_Keyword(Descr As String, KeyWordS As String) As Boolean
+Dim A() As String, IsIn As Boolean, i As Integer
+A = Split(KeyWordS, "/")
+IsIn = False
+For i = LBound(A) To UBound(A)
+    If InStr(1, Descr, A(i)) Then
+        IsIn = True
+        Exit For
+    Else
+    End If
+Next i
+Contains_Keyword = IsIn
+
+
+End Function
